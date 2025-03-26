@@ -16,6 +16,8 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('GALAGA')
 clock = pygame.time.Clock()
 
+# Fuente para mostrar el mensaje
+font = pygame.font.SysFont('Arial', 48)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -40,7 +42,6 @@ class Player(pygame.sprite.Sprite):
         if self.rect.left < 0:
             self.rect.left = 0
 
-
 class Meteor(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -61,7 +62,6 @@ class Meteor(pygame.sprite.Sprite):
         if self.rect.top > HEIGHT:
             self.rect.x = random.randrange(WIDTH - self.rect.width)
             self.rect.y = random.randrange(-100, -40)
-
 
 class Disparo(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -96,6 +96,8 @@ for i in range(8):
     meteor_list.add(meteor)
 
 running = True
+game_over = False
+
 while running:
     clock.tick(60)
     for event in pygame.event.get():
@@ -103,31 +105,39 @@ while running:
             running = False
         # Detectamos cuando se presiona la tecla espacio
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE and not game_over:
                 disparo = Disparo(player.rect.centerx, player.rect.top)
                 all_sprites.add(disparo)
                 disparos_list.add(disparo)
 
-    all_sprites.update()
+    if not game_over:
+        all_sprites.update()
 
-    # Detectamos las colisiones entre los meteoros y los disparos
-    
-    colisionM = pygame.sprite.groupcollide(meteor_list, disparos_list, True, True)
-    
-    for meteor in colisionM:
-        nuevo_meteor = Meteor()
-        all_sprites.add(nuevo_meteor)
-        meteor_list.add(nuevo_meteor)
+        # Detectamos las colisiones entre los meteoros y los disparos
+        colisionM = pygame.sprite.groupcollide(meteor_list, disparos_list, True, True)
 
-    # Detectamos las colisiones entre los meteoros y el jugador
-    colisionJ = pygame.sprite.spritecollide(player, meteor_list, True)
+        for meteor in colisionM:
+            nuevo_meteor = Meteor()
+            all_sprites.add(nuevo_meteor)
+            meteor_list.add(nuevo_meteor)
 
-    if colisionJ:   
-       print("Game Over")
-        
+        # Detectamos las colisiones entre los meteoros y el jugador
+        colisionJ = pygame.sprite.spritecollide(player, meteor_list, True)
+
+        if colisionJ:   
+            game_over = True
+            print("Game Over")
+
+    # Dibuja el fondo
     screen.blit(background, [0, 0])
 
+    # Dibuja todos los sprites
     all_sprites.draw(screen)
+
+    # Si el juego terminó, muestra el mensaje de Game Over
+    if game_over:
+        game_over_text = font.render('Game Over', True, WHITE)
+        screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
 
     pygame.display.flip()
 
